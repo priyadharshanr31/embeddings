@@ -1,9 +1,8 @@
 import sqlite3
 import datetime
 import tiktoken
-from transformers import DistilBertTokenizer
 
-# Database setup (Creates a DB file in the same folder)
+# Database setup
 DB_FILE = "token_usage.db"
 
 # Function to create table if not exists
@@ -28,22 +27,19 @@ def create_table():
 create_table()
 
 # Function to calculate token count
-def calculate_token_count(text, model="gpt-3.5-turbo"):
-    if model in ["gpt-3.5-turbo", "deepseek-chat"]:
-        encoding = tiktoken.get_encoding("cl100k_base")  # GPT-3.5 tokenizer
+def calculate_token_count(text, model="deepseek-chat"):
+    if model == "deepseek-chat":
+        encoding = tiktoken.get_encoding("cl100k_base")  # Tokenizer for GPT-based models
         tokens = encoding.encode(text)
         return len(tokens)
-    
-    elif model == "distilbert-base-cased":
-        tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-cased")
-        tokens = tokenizer.encode(text)
-        return len(tokens)
-    
     else:
         raise ValueError("Unsupported model for token count calculation.")
 
-# Function to log data into SQLite database
+# Function to log DeepSeek API data into SQLite database
 def log_data_to_arctic(api_name, prompt, response, response_time, token_count):
+    if api_name not in ["DeepSeek Summarization", "DeepSeek Chatbot"]:
+        return  # Skip logging if it's not DeepSeek API
+
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
